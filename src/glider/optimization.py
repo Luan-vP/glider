@@ -1,7 +1,9 @@
 import mujoco
 import numpy as np
 
-from .constants import DEFAULT_MAX_WING_DIMENSION_M, AIR_DENSITY, AIR_VISCOSITY
+from .constants import (DEFAULT_MAX_WING_DIMENSION_M, AIR_DENSITY,
+                        AIR_VISCOSITY, MIN_THICKNESS_RATIO,
+                        THINNESS_PENALTY_WEIGHT)
 from .vehicle import Vehicle
 
 NUM_GENES = 10
@@ -40,6 +42,25 @@ def drop_test_glider(
     return world_xml
 
 
+def thinness_ratio(vertices: list[list[float]]) -> float:
+    points = np.asarray(vertices, dtype=float)
+    if points.shape[0] < 3:
+        return 1.0
+
+    centered = points - points.mean(axis=0, keepdims=True)
+    cov = (centered.T @ centered) / points.shape[0]
+    eigvals = np.linalg.eigvalsh(cov)
+    eigvals = np.clip(eigvals, 0.0, None)
+    axes = np.sqrt(eigvals + 1e-12)
+
+    max_axis = axes[-1]
+    min_axis = axes[0]
+    if max_axis <= 1e-12:
+        return 1.0
+
+    return float(min_axis / max_axis)
+
+
 def fitness_func(test_vehicle: Vehicle) -> float:
     test_xml = drop_test_glider(test_vehicle, height=DROP_TEST_HEIGHT)
 
@@ -50,7 +71,15 @@ def fitness_func(test_vehicle: Vehicle) -> float:
     while len(data.contact) < 1:  # Render until landing
         mujoco.mj_step(model, data)
 
-    return abs(data.geom("vehicle-wing").xpos[0])
+    distance = abs(data.geom("vehicle-wing").xpos[0])
+    ratio = thinness_ratio(test_vehicle.vertices)
+    thinness_penalty = 0.0
+    if ratio < MIN_THICKNESS_RATIO:
+        thinness_penalty = THINNESS_PENALTY_WEIGHT * (
+            (MIN_THICKNESS_RATIO - ratio) / MIN_THICKNESS_RATIO
+        )
+
+    return distance - thinness_penalty
 
 
 def iterate_population(

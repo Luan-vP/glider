@@ -10,7 +10,7 @@ import glider.visualization as visualization
 from .constants import (DEFAULT_MAX_WING_DIMENSION_M, MUTATION_CHANCE,
                         MUTATION_RATIO, WING_DENSITY, WING_RGBA,
                         PILOT_RGBA, PILOT_DIMENSIONS_M, PILOT_MASS_KG,
-                        create_pilot_geom)
+                        FLUID_SHAPE, create_pilot_geom)
 
 
 @dataclass
@@ -155,7 +155,7 @@ class Vehicle:
     <body name="body" pos="0 0 0" euler="{' '.join(map(str, self.orientation))}">
         <freejoint/>
         <!-- Main Wing -->
-        <geom name="{'vehicle-wing'}" {density_tag if not self.mass_kg else mass_tag} {pos_tag} rgba="{WING_RGBA}" type="mesh" mesh="{'vehicle-wing-mesh'}"/>
+        <geom name="{'vehicle-wing'}" {density_tag if not self.mass_kg else mass_tag} {pos_tag} rgba="{WING_RGBA}" type="mesh" mesh="{'vehicle-wing-mesh'}" fluidshape="{FLUID_SHAPE}"/>
         <camera name="track" pos="0 0 0" xyaxes="1 2 0 0 1 2" mode="track"/>
         {create_pilot_geom() if self.pilot else ''}
     </body>

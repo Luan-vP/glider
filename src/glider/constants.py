@@ -3,6 +3,7 @@ from functools import reduce
 AIR_DENSITY = 1.2
 AIR_VISCOSITY = 0.00002
 WIND = "0 0 0"
+FLUID_SHAPE = "ellipsoid"
 
 # Pilot defaults
 PILOT_RGBA = "0.2 0.2 0.8 0.5"
@@ -27,6 +28,10 @@ MUTATION_CHANCE = 1.0
 MUTATION_WEIGHT = 3
 CLONE_WEIGHT = 2
 CROSSOVER_WEIGHT = 1
+
+# Shape penalty
+MIN_THICKNESS_RATIO = 0.08
+THINNESS_PENALTY_WEIGHT = 5.0
 
 # Rendering constants
 FRAME_WIDTH = 320
