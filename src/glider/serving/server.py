@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from PIL import Image
 from base64 import b64encode
 from io import BytesIO
 
-from .schema import VehicleType
+from .schema import VehicleType, EvolutionRequest, GenerationResult
 
 from glider import optimization, vehicle, visualization
 
@@ -50,3 +51,57 @@ async def view_vehicle(v: VehicleType):
 async def vehicle_fitness(v: VehicleType) -> float:
     test_vehicle = vehicle.Vehicle(**v.model_dump())
     return optimization.fitness_func(test_vehicle)
+
+
+@app.post("/evolution/run")
+async def run_evolution(req: EvolutionRequest):
+    def generate():
+        # Create initial population
+        population = [
+            vehicle.Vehicle(
+                num_vertices=optimization.NUM_GENES,
+                max_dim_m=req.max_dim_m,
+                pilot=req.pilot,
+                mass_kg=req.mass_kg,
+                wing_density=req.wing_density,
+            )
+            for _ in range(req.population_size)
+        ]
+
+        for gen in range(req.num_generations):
+            # Run one generation
+            ranking, population = optimization.iterate_population(
+                population,
+                survival_weight=req.survival_weight,
+                cloning_weight=req.cloning_weight,
+                max_dim_m=req.max_dim_m,
+                pilot=req.pilot,
+                mass_kg=req.mass_kg,
+            )
+
+            # Extract results
+            best_vehicle, best_fitness = ranking[0]
+            all_fitnesses = [score for _, score in ranking]
+            avg_fitness = sum(all_fitnesses) / len(all_fitnesses)
+
+            # Create result object
+            result = GenerationResult(
+                generation=gen,
+                best_fitness=best_fitness,
+                avg_fitness=avg_fitness,
+                best_vehicle=VehicleType(
+                    vertices=best_vehicle.vertices,
+                    faces=best_vehicle.faces,
+                    max_dim_m=best_vehicle.max_dim_m,
+                    mass_kg=best_vehicle.mass_kg,
+                    orientation=best_vehicle.orientation,
+                    wing_density=best_vehicle.wing_density,
+                    pilot=best_vehicle.pilot,
+                ),
+                population_fitness=all_fitnesses,
+            )
+
+            # Yield SSE-formatted event
+            yield f"data: {result.model_dump_json()}\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
