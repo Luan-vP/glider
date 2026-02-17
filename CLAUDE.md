@@ -43,3 +43,33 @@ pytest
 - UPPER_SNAKE_CASE for constants
 - Test files: `test_<module>.py`
 - Test functions: `test_<behavior>()`
+
+## Frontend
+
+The frontend is a React + TypeScript single-page application built with Vite.
+
+### Development
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The dev server runs on `http://localhost:5173` and proxies API requests to the backend at `http://localhost:8000`.
+
+### Building
+
+```bash
+cd frontend
+npm run build
+```
+
+### Project Structure
+
+- `frontend/src/` - React application source
+  - `App.tsx` - Main application component
+  - `main.tsx` - Application entry point
+  - `index.css` - Global styles (Tailwind directives)
+- `frontend/vite.config.ts` - Vite configuration
+- `frontend/tailwind.config.js` - Tailwind CSS configuration
