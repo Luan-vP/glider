@@ -49,6 +49,9 @@ export interface AppState {
   /** Add a new fitness evaluation result */
   addFitnessResult: (record: FitnessRecord) => void;
 
+  /** Clear all fitness history */
+  clearFitnessHistory: () => void;
+
   // ============================================================
   // Evolution
   // ============================================================
@@ -103,6 +106,8 @@ export const useVehicleStore = create<AppState>((set) => ({
     set((state) => ({
       fitnessHistory: [...state.fitnessHistory, record],
     })),
+
+  clearFitnessHistory: () => set({ fitnessHistory: [] }),
 
   // Initial evolution state
   evolutionRunning: false,
