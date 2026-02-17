@@ -40,6 +40,10 @@ mypy = "^0.910"
 flake8 = "^3.9.2"
 black = "^21.9b0"
 
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+
 [tool.ruff]
 line-length = 88
 target-version = "py310"
