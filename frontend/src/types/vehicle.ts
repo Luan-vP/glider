@@ -43,18 +43,19 @@ export const DEFAULT_VEHICLE: VehicleType = {
 
 /**
  * Result from a single generation in the evolutionary algorithm.
+ * Uses snake_case to match backend wire format exactly.
  */
 export interface GenerationResult {
   /** Generation number (0-indexed) */
   generation: number;
   /** Fitness score of the best individual in this generation */
-  bestFitness: number;
+  best_fitness: number;
   /** Average fitness across the entire population */
-  avgFitness: number;
+  avg_fitness: number;
   /** The best-performing vehicle in this generation */
-  bestVehicle: VehicleType;
+  best_vehicle: VehicleType;
   /** Fitness scores for all individuals (for histogram rendering) */
-  populationFitness: number[];
+  population_fitness: number[];
 }
 
 /**
