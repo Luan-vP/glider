@@ -1,0 +1,14 @@
+{
+  "name": "Protect main",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/main"]
+    }
+  },
+  "rules": [
+    { "type": "pull_request", "parameters": { "required_approving_review_count": 1 } },
+    { "type": "required_status_checks", "parameters": { "required_status_checks": [{ "context": "test" }] } }
+  ]
+}
