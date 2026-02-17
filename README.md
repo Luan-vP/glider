@@ -13,5 +13,23 @@ Glider shape is defined in XML, support for STLs is also possible.
 
 Physics simulation in Mujoco for flight in air.
 
+## Setup
+
+```bash
+pip install -e ".[dev]"
+```
+
+### Run tests
+
+```bash
+pytest
+```
+
+### Build
+
+```bash
+pip install -e .
+```
+
 ## Dependencies
 ffmpeg
