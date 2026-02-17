@@ -11,7 +11,10 @@ from glider import optimization, vehicle, visualization
 
 app = FastAPI()
 
-origins = ["http://localhost:5173"]
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3357",
+]
 
 app.add_middleware(
     CORSMiddleware,
