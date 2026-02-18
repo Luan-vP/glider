@@ -7,6 +7,26 @@ authors = [
   { name = "Luan van Pletsen", email = "luanvanpletsen@gmail.com" }
 ]
 requires-python = ">=3.8"
+dependencies = [
+  "numpy",
+  "mediapy",
+  "mujoco",
+  "pandas",
+  "trimesh",
+  "pygad",
+  "fastapi",
+  "uvicorn",
+  "pymongo",
+  "Pillow",
+  "matplotlib",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "mypy",
+  "ruff>=0.4.0",
+]
 
 [build-system]
 requires = ["hatchling"]
