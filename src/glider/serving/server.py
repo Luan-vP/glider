@@ -1,13 +1,14 @@
+from base64 import b64encode
+from io import BytesIO
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from PIL import Image
-from base64 import b64encode
-from io import BytesIO
-
-from .schema import VehicleType, EvolutionRequest, GenerationResult
 
 from glider import optimization, vehicle, visualization
+
+from .schema import EvolutionRequest, GenerationResult, VehicleType
 
 app = FastAPI()
 

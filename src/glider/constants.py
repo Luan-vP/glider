@@ -39,4 +39,9 @@ FRAME_HEIGHT = 240
 
 
 def create_pilot_geom(pos: list[float] = [0, 0, 0]):
-    return f"""<geom name="pilot" type="box" size="{' '.join(map(str, PILOT_DIMENSIONS_M))}" pos="{' '.join(map(str,pos))}" />"""
+    size = " ".join(map(str, PILOT_DIMENSIONS_M))
+    pos_str = " ".join(map(str, pos))
+    return (
+        f'<geom name="pilot" type="box"'
+        f' size="{size}" pos="{pos_str}" />'
+    )

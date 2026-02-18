@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, Iterable
+from collections.abc import Callable, Iterable
 
 from .optimization import fitness_func
 from .surface import spherical_delaunay_surface

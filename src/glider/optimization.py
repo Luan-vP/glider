@@ -1,9 +1,13 @@
 import mujoco
 import numpy as np
 
-from .constants import (DEFAULT_MAX_WING_DIMENSION_M, AIR_DENSITY,
-                        AIR_VISCOSITY, MIN_THICKNESS_RATIO,
-                        THINNESS_PENALTY_WEIGHT)
+from .constants import (
+    AIR_DENSITY,
+    AIR_VISCOSITY,
+    DEFAULT_MAX_WING_DIMENSION_M,
+    MIN_THICKNESS_RATIO,
+    THINNESS_PENALTY_WEIGHT,
+)
 from .vehicle import Vehicle
 
 NUM_GENES = 10
@@ -31,7 +35,9 @@ def drop_test_glider(
         {glider_xml}
         <!-- Landing Platform -->
         <body name="platform" pos="0 0 0">
-            <geom name="platform-geom" type="box" size="1500 1500 1" rgba="1 1 1 1" pos="0 0 {-height}"/>
+            <geom name="platform-geom" type="box"
+                size="1500 1500 1" rgba="1 1 1 1"
+                pos="0 0 {-height}"/>
         </body>
     </worldbody>
 
