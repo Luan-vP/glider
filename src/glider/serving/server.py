@@ -1,17 +1,29 @@
+from base64 import b64encode
+from collections.abc import Generator
+from io import BytesIO
+from typing import Any
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from PIL import Image
-from base64 import b64encode
-from io import BytesIO
-
-from .schema import VehicleType, EvolutionRequest, GenerationResult, DropTestVideoResult
 
 from glider import optimization, vehicle, visualization
+from glider.constants import WING_DENSITY
+
+from .schema import (
+    DropTestVideoResult,
+    EvolutionRequest,
+    GenerationResult,
+    VehicleType,
+)
 
 app = FastAPI()
 
-origins = ["http://localhost:5173"]
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3357",
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,27 +35,29 @@ app.add_middleware(
 
 
 @app.get("/")
-def read_root():
+def read_root() -> dict[str, str]:
     return {"Hello": "World"}
 
 
 @app.get("/vehicle/")
-async def create_vehicle():
+async def create_vehicle() -> Any:
     return vehicle.Vehicle()
 
 
 @app.post("/vehicle/drop_test/")
-async def drop_test_vehicle(v: VehicleType):
+async def drop_test_vehicle(v: VehicleType) -> str:
     test_vehicle = vehicle.Vehicle(**v.model_dump())
     return optimization.drop_test_glider(test_vehicle)
 
 
 @app.post("/vehicle/view/")
-async def view_vehicle(v: VehicleType):
+async def view_vehicle(v: VehicleType) -> dict[str, str]:
     test_vehicle = vehicle.Vehicle(**v.model_dump())
-    bytes = BytesIO()
-    Image.fromarray(visualization.view_vehicle(test_vehicle)).save(bytes, format="PNG")
-    b64_image = b64encode(bytes.getvalue())
+    buf = BytesIO()
+    Image.fromarray(
+        visualization.view_vehicle(test_vehicle)
+    ).save(buf, format="PNG")
+    b64_image = b64encode(buf.getvalue())
     return {"data": b64_image.decode("utf-8")}
 
 
@@ -54,46 +68,49 @@ async def vehicle_fitness(v: VehicleType) -> float:
 
 
 @app.post("/vehicle/drop_test_video/")
-async def drop_test_video(v: VehicleType) -> DropTestVideoResult:
-    """
-    Run a drop test and return videos from both camera angles along with fitness score.
-    Renders the simulation from 'fixed' (stationary) and 'track' (body-attached) cameras.
-    """
+async def drop_test_video(
+    v: VehicleType,
+) -> DropTestVideoResult:
+    """Run a drop test and return videos from both camera angles."""
     import mujoco
 
     test_vehicle = vehicle.Vehicle(**v.model_dump())
 
-    # Build the drop test world XML (includes both cameras)
-    world_xml = optimization.drop_test_glider(test_vehicle, height=optimization.DROP_TEST_HEIGHT)
+    world_xml = optimization.drop_test_glider(
+        test_vehicle, height=optimization.DROP_TEST_HEIGHT
+    )
 
-    # Create model and data
     model = mujoco.MjModel.from_xml_string(world_xml)
     data = mujoco.MjData(model)
 
-    # Render frames from both cameras until collision
-    fixed_frames = visualization.render_to_collision(model, data, framerate=60, camera_name="fixed", show=False)
+    fixed_frames = visualization.render_to_collision(
+        model, data, framerate=60, camera_name="fixed", show=False
+    )
 
-    # Reset simulation for second camera
     mujoco.mj_resetData(model, data)
-    track_frames = visualization.render_to_collision(model, data, framerate=60, camera_name="track", show=False)
+    track_frames = visualization.render_to_collision(
+        model, data, framerate=60, camera_name="track", show=False
+    )
 
-    # Calculate fitness using the standard fitness function
     fitness = optimization.fitness_func(test_vehicle)
 
-    # Encode videos to base64
-    fixed_video = visualization.encode_video_to_base64(fixed_frames, framerate=60)
-    track_video = visualization.encode_video_to_base64(track_frames, framerate=60)
+    fixed_video = visualization.encode_video_to_base64(
+        fixed_frames, framerate=60
+    )
+    track_video = visualization.encode_video_to_base64(
+        track_frames, framerate=60
+    )
 
     return DropTestVideoResult(
         fitness=fitness,
         fixed_camera_video=fixed_video,
-        track_camera_video=track_video
+        track_camera_video=track_video,
     )
 
 
 @app.post("/evolution/run")
-async def run_evolution(req: EvolutionRequest):
-    def generate():
+async def run_evolution(req: EvolutionRequest) -> StreamingResponse:
+    def generate() -> Generator[str, None, None]:
         # Create initial population
         population = [
             vehicle.Vehicle(
@@ -101,7 +118,11 @@ async def run_evolution(req: EvolutionRequest):
                 max_dim_m=req.max_dim_m,
                 pilot=req.pilot,
                 mass_kg=req.mass_kg,
-                wing_density=req.wing_density,
+                wing_density=(
+                    req.wing_density
+                    if req.wing_density is not None
+                    else WING_DENSITY
+                ),
             )
             for _ in range(req.population_size)
         ]
@@ -120,7 +141,9 @@ async def run_evolution(req: EvolutionRequest):
             # Extract results
             best_vehicle, best_fitness = ranking[0]
             all_fitnesses = [score for _, score in ranking]
-            avg_fitness = sum(all_fitnesses) / len(all_fitnesses)
+            avg_fitness = (
+                sum(all_fitnesses) / len(all_fitnesses)
+            )
 
             # Create result object
             result = GenerationResult(
@@ -142,4 +165,6 @@ async def run_evolution(req: EvolutionRequest):
             # Yield SSE-formatted event
             yield f"data: {result.model_dump_json()}\n\n"
 
-    return StreamingResponse(generate(), media_type="text/event-stream")
+    return StreamingResponse(
+        generate(), media_type="text/event-stream"
+    )

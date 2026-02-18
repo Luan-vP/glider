@@ -1,0 +1,43 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    ports:
+      - "3356:8000"
+    volumes:
+      - ../src:/app/src
+    environment:
+      - MUJOCO_GL=osmesa
+    command: >
+      uvicorn glider.serving.server:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+      --reload-dir /app/src
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: ../docker/Dockerfile.frontend
+    ports:
+      - "3357:5173"
+    volumes:
+      - ../frontend/src:/app/src
+    environment:
+      - VITE_API_URL=/api
+      - VITE_PROXY_TARGET=http://backend:8000
+      - VITE_PORT=5173
+    depends_on:
+      - backend
+
+  playwright:
+    build:
+      context: ../e2e
+      dockerfile: ../docker/Dockerfile.playwright
+    environment:
+      - BASE_URL=http://frontend:5173
+    depends_on:
+      - frontend
+    profiles:
+      - test

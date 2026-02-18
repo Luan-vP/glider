@@ -1,0 +1,11 @@
+FROM mcr.microsoft.com/playwright:v1.51.0-noble
+
+WORKDIR /tests
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+
+# Default: run all tests
+CMD ["npx", "playwright", "test"]

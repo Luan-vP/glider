@@ -7,10 +7,15 @@ import trimesh
 
 import glider.visualization as visualization
 
-from .constants import (DEFAULT_MAX_WING_DIMENSION_M, MUTATION_CHANCE,
-                        MUTATION_RATIO, WING_DENSITY, WING_RGBA,
-                        PILOT_RGBA, PILOT_DIMENSIONS_M, PILOT_MASS_KG,
-                        FLUID_SHAPE, create_pilot_geom)
+from .constants import (
+    DEFAULT_MAX_WING_DIMENSION_M,
+    FLUID_SHAPE,
+    MUTATION_CHANCE,
+    MUTATION_RATIO,
+    WING_DENSITY,
+    WING_RGBA,
+    create_pilot_geom,
+)
 
 
 @dataclass
@@ -51,8 +56,8 @@ class Vehicle:
 
     def __init__(
         self,
-        vertices: list | None = None,
-        faces: list | None = None,
+        vertices: list[list[float]] | None = None,
+        faces: list[list[int]] | None = None,
         num_vertices: int = 30,
         max_dim_m: float = DEFAULT_MAX_WING_DIMENSION_M,
         pilot: bool = False,
@@ -60,7 +65,7 @@ class Vehicle:
         mass_kg: float | None = None,
         orientation: list[float] = [0.0, 0.0, 0.0],
     ):
-        super(Vehicle, self).__init__()
+        super().__init__()
 
         self.max_dim_m = max_dim_m
         self.mass_kg = mass_kg
@@ -122,9 +127,9 @@ class Vehicle:
         self,
         filename: str,
         scale: float = 1.0,
-    ):
+    ) -> Any:
         with open(filename, "rb") as f:
-            mesh = trimesh.load(
+            mesh: Any = trimesh.load(
                 f,
                 file_type="stl",
             )
@@ -134,38 +139,62 @@ class Vehicle:
 
         return vertices
 
-    def get_wing_asset(self):
+    def get_wing_asset(self) -> str:
+        name = "vehicle-wing-mesh"
+        verts = to_vertex_list(self.vertices)
         if self.faces:
-            return f"""
-            <asset>
-                <mesh name="{'vehicle-wing-mesh'}" vertex="{to_vertex_list(self.vertices)}" face="{to_vertex_list(self.faces)}"/>
-            </asset>"""
+            face_str = to_vertex_list(self.faces)
+            return (
+                "\n            <asset>"
+                f'\n                <mesh name="{name}"'
+                f' vertex="{verts}"'
+                f' face="{face_str}"/>'
+                "\n            </asset>"
+            )
         else:
-            return f"""
-            <asset>
-                <mesh name="{'vehicle-wing-mesh'}" vertex="{to_vertex_list(self.vertices)}"/>
-            </asset>"""
+            return (
+                "\n            <asset>"
+                f'\n                <mesh name="{name}"'
+                f' vertex="{verts}"/>'
+                "\n            </asset>"
+            )
 
     def xml(self) -> tuple[str, str]:
         density_tag = f'density="{WING_DENSITY}"'
         mass_tag = f'mass="{self.mass_kg}"'
-        pos_tag = f'pos="{" ".join([str(-self.max_dim_m // 2) for _ in range(3)])}"'
+        pos_val = " ".join(
+            [str(-self.max_dim_m // 2) for _ in range(3)]
+        )
+        pos_tag = f'pos="{pos_val}"'
+        euler = " ".join(map(str, self.orientation))
+        weight = (
+            density_tag if not self.mass_kg else mass_tag
+        )
+        geom_attrs = (
+            f'name="vehicle-wing" {weight} {pos_tag}'
+            f' rgba="{WING_RGBA}" type="mesh"'
+            f' mesh="vehicle-wing-mesh"'
+            f' fluidshape="{FLUID_SHAPE}"'
+        )
+        pilot_geom = (
+            create_pilot_geom() if self.pilot else ""
+        )
 
         body_xml = f"""
-    <body name="body" pos="0 0 0" euler="{' '.join(map(str, self.orientation))}">
+    <body name="body" pos="0 0 0" euler="{euler}">
         <freejoint/>
         <!-- Main Wing -->
-        <geom name="{'vehicle-wing'}" {density_tag if not self.mass_kg else mass_tag} {pos_tag} rgba="{WING_RGBA}" type="mesh" mesh="{'vehicle-wing-mesh'}" fluidshape="{FLUID_SHAPE}"/>
+        <geom {geom_attrs}/>
         <camera name="track" pos="0 0 0" xyaxes="1 2 0 0 1 2" mode="track"/>
-        {create_pilot_geom() if self.pilot else ''}
+        {pilot_geom}
     </body>
     """
 
         asset_xml = self.get_wing_asset()
         return body_xml, asset_xml
 
-    def show(self):
-        media.show_image(visualization.view_vehicle(*self.xml()))
+    def show(self) -> None:
+        media.show_image(visualization.view_vehicle(self))
 
     def exceeds_max_dim(self) -> bool:
         try:
@@ -179,7 +208,7 @@ class Vehicle:
 
 
 def to_vertex_list(
-    points: list,
+    points: list[list[float]] | list[list[int]],
 ) -> str:
     str_points = []
 
