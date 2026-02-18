@@ -28,3 +28,9 @@ class GenerationResult(BaseModel):
     avg_fitness: float
     best_vehicle: VehicleType
     population_fitness: list[float]
+
+
+class DropTestVideoResult(BaseModel):
+    fitness: float
+    fixed_camera_video: str
+    track_camera_video: str

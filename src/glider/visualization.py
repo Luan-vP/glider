@@ -148,3 +148,37 @@ def render_for_time_secs(
         media.show_video(frames, fps=framerate)
 
     return frames
+
+
+def encode_video_to_base64(frames: list[np.ndarray], framerate: int = 60) -> str:
+    """
+    Encode a list of frames as an mp4 video and return as base64 string.
+
+    Args:
+        frames: List of numpy arrays representing video frames
+        framerate: Frames per second for the video
+
+    Returns:
+        Base64-encoded mp4 video string
+    """
+    import tempfile
+    from base64 import b64encode
+
+    # Write video to temporary file (mediapy expects file path, not BytesIO)
+    with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as tmp_file:
+        tmp_path = tmp_file.name
+
+    try:
+        media.write_video(tmp_path, frames, fps=framerate, codec='h264')
+
+        # Read the video file and encode to base64
+        with open(tmp_path, 'rb') as f:
+            video_bytes = f.read()
+        b64_video = b64encode(video_bytes)
+
+        return b64_video.decode('utf-8')
+    finally:
+        # Clean up temporary file
+        import os
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)

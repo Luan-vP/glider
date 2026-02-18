@@ -1,9 +1,10 @@
 import json
+
 import pytest
 from fastapi.testclient import TestClient
 
+from glider.serving.schema import GenerationResult
 from glider.serving.server import app
-from glider.serving.schema import EvolutionRequest, GenerationResult
 
 
 @pytest.fixture
@@ -56,7 +57,7 @@ def test_evolution_run_endpoint(client):
 def test_evolution_run_with_pilot(client):
     """Test evolution endpoint with pilot enabled."""
     request_data = {
-        "population_size": 3,
+        "population_size": 5,
         "num_generations": 1,
         "pilot": True,
     }

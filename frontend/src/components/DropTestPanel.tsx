@@ -9,7 +9,7 @@
 
 import { useState } from 'react';
 import { useVehicleStore } from '../state/vehicle-store';
-import { getVehicleFitness } from '../api/client';
+import { getDropTestVideo, type DropTestVideoResult } from '../api/client';
 
 export function DropTestPanel() {
   const vehicle = useVehicleStore((state) => state.vehicle);
@@ -19,6 +19,8 @@ export function DropTestPanel() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [videoResult, setVideoResult] = useState<DropTestVideoResult | null>(null);
+  const [selectedCamera, setSelectedCamera] = useState<'fixed' | 'track'>('fixed');
 
   // Check if vehicle has been generated
   const hasVehicle = vehicle.vertices !== null;
@@ -37,12 +39,15 @@ export function DropTestPanel() {
     setError(null);
 
     try {
-      const score = await getVehicleFitness(vehicle);
+      const result = await getDropTestVideo(vehicle);
+
+      // Store video result
+      setVideoResult(result);
 
       // Add result to history
       addFitnessResult({
         vehicle,
-        score,
+        score: result.fitness,
         timestamp: Date.now(),
       });
     } catch (err) {
@@ -180,6 +185,62 @@ export function DropTestPanel() {
           {scoreComparison?.isBest && (
             <div className="text-xs text-yellow-400 mt-2">★ Best score!</div>
           )}
+        </div>
+      )}
+
+      {/* Video Display */}
+      {videoResult && (
+        <div className="bg-gray-800 rounded-lg p-4 mb-4">
+          <div className="text-sm text-gray-400 mb-2">Flight Recording</div>
+
+          {/* Camera Selection Tabs */}
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => setSelectedCamera('fixed')}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                selectedCamera === 'fixed'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              Fixed Camera
+            </button>
+            <button
+              onClick={() => setSelectedCamera('track')}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                selectedCamera === 'track'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              Tracking Camera
+            </button>
+          </div>
+
+          {/* Video Player */}
+          <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
+            <video
+              key={selectedCamera}
+              className="w-full h-full"
+              controls
+              autoPlay
+              loop
+              muted
+              src={`data:video/mp4;base64,${
+                selectedCamera === 'fixed'
+                  ? videoResult.fixed_camera_video
+                  : videoResult.track_camera_video
+              }`}
+            >
+              Your browser does not support the video tag.
+            </video>
+          </div>
+
+          <div className="text-xs text-gray-500 mt-2">
+            {selectedCamera === 'fixed'
+              ? 'Stationary camera view from fixed position'
+              : 'Camera attached to glider body'}
+          </div>
         </div>
       )}
 
