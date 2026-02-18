@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
+from typing import Any
 
 from .optimization import fitness_func
 from .surface import spherical_delaunay_surface
@@ -16,7 +17,7 @@ def process_genome(
     vertices: Iterable[Iterable[float]],
     surface_builder: SurfaceBuilder = spherical_delaunay_surface,
     fitness: FitnessFunc = fitness_func,
-    **vehicle_kwargs,
+    **vehicle_kwargs: Any,
 ) -> tuple[Vehicle, float]:
     """
     Build a surface from coordinates, simulate, and return fitness score.

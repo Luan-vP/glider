@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import mujoco
 import numpy as np
 
@@ -20,7 +22,7 @@ def create_point(max_dim_m: float) -> list[float]:
 
 def drop_test_glider(
     vehicle: Vehicle,
-    height=80,
+    height: float = 80,
     wind: str = "0 0 0",
 ) -> str:
     glider_xml, glider_asset = vehicle.xml()
@@ -85,17 +87,17 @@ def fitness_func(test_vehicle: Vehicle) -> float:
             (MIN_THICKNESS_RATIO - ratio) / MIN_THICKNESS_RATIO
         )
 
-    return distance - thinness_penalty
+    return float(distance - thinness_penalty)
 
 
 def iterate_population(
     input_population: list[Vehicle],
-    survival_weight=0.3,
-    cloning_weight=0.4,
-    max_dim_m=DEFAULT_MAX_WING_DIMENSION_M,
+    survival_weight: float = 0.3,
+    cloning_weight: float = 0.4,
+    max_dim_m: float = DEFAULT_MAX_WING_DIMENSION_M,
     pilot: bool = False,
     mass_kg: float | None = None,
-):
+) -> tuple[list[tuple[Vehicle, float]], list[Vehicle]]:
     """
     Take an input population, and return a new population based on the
     survival and cloning weights. Random gliders are generated to fill
@@ -148,7 +150,7 @@ def iterate_population(
 
 def evaluate_population(
         input_population: list[Vehicle],
-        fitness_func=fitness_func,
+        fitness_func: Callable[[Vehicle], float] = fitness_func,
         ) -> list[tuple[Vehicle, float]]:
 
     results: list[float] = []

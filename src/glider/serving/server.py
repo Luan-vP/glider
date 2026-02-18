@@ -1,5 +1,7 @@
 from base64 import b64encode
+from collections.abc import Generator
 from io import BytesIO
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,6 +9,7 @@ from fastapi.responses import StreamingResponse
 from PIL import Image
 
 from glider import optimization, vehicle, visualization
+from glider.constants import WING_DENSITY
 
 from .schema import EvolutionRequest, GenerationResult, VehicleType
 
@@ -27,27 +30,27 @@ app.add_middleware(
 
 
 @app.get("/")
-def read_root():
+def read_root() -> dict[str, str]:
     return {"Hello": "World"}
 
 
 @app.get("/vehicle/")
-async def create_vehicle():
+async def create_vehicle() -> Any:
     return vehicle.Vehicle()
 
 
 @app.post("/vehicle/drop_test/")
-async def drop_test_vehicle(v: VehicleType):
+async def drop_test_vehicle(v: VehicleType) -> str:
     test_vehicle = vehicle.Vehicle(**v.model_dump())
     return optimization.drop_test_glider(test_vehicle)
 
 
 @app.post("/vehicle/view/")
-async def view_vehicle(v: VehicleType):
+async def view_vehicle(v: VehicleType) -> dict[str, str]:
     test_vehicle = vehicle.Vehicle(**v.model_dump())
-    bytes = BytesIO()
-    Image.fromarray(visualization.view_vehicle(test_vehicle)).save(bytes, format="PNG")
-    b64_image = b64encode(bytes.getvalue())
+    buf = BytesIO()
+    Image.fromarray(visualization.view_vehicle(test_vehicle)).save(buf, format="PNG")
+    b64_image = b64encode(buf.getvalue())
     return {"data": b64_image.decode("utf-8")}
 
 
@@ -58,8 +61,8 @@ async def vehicle_fitness(v: VehicleType) -> float:
 
 
 @app.post("/evolution/run")
-async def run_evolution(req: EvolutionRequest):
-    def generate():
+async def run_evolution(req: EvolutionRequest) -> StreamingResponse:
+    def generate() -> Generator[str, None, None]:
         # Create initial population
         population = [
             vehicle.Vehicle(
@@ -67,7 +70,9 @@ async def run_evolution(req: EvolutionRequest):
                 max_dim_m=req.max_dim_m,
                 pilot=req.pilot,
                 mass_kg=req.mass_kg,
-                wing_density=req.wing_density,
+                wing_density=(
+                    req.wing_density if req.wing_density is not None else WING_DENSITY
+                ),
             )
             for _ in range(req.population_size)
         ]

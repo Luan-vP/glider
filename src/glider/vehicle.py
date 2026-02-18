@@ -56,8 +56,8 @@ class Vehicle:
 
     def __init__(
         self,
-        vertices: list | None = None,
-        faces: list | None = None,
+        vertices: list[list[float]] | None = None,
+        faces: list[list[int]] | None = None,
         num_vertices: int = 30,
         max_dim_m: float = DEFAULT_MAX_WING_DIMENSION_M,
         pilot: bool = False,
@@ -127,9 +127,9 @@ class Vehicle:
         self,
         filename: str,
         scale: float = 1.0,
-    ):
+    ) -> Any:
         with open(filename, "rb") as f:
-            mesh = trimesh.load(
+            mesh: Any = trimesh.load(
                 f,
                 file_type="stl",
             )
@@ -139,7 +139,7 @@ class Vehicle:
 
         return vertices
 
-    def get_wing_asset(self):
+    def get_wing_asset(self) -> str:
         name = "vehicle-wing-mesh"
         verts = to_vertex_list(self.vertices)
         if self.faces:
@@ -193,8 +193,8 @@ class Vehicle:
         asset_xml = self.get_wing_asset()
         return body_xml, asset_xml
 
-    def show(self):
-        media.show_image(visualization.view_vehicle(*self.xml()))
+    def show(self) -> None:
+        media.show_image(visualization.view_vehicle(self))
 
     def exceeds_max_dim(self) -> bool:
         try:
@@ -208,7 +208,7 @@ class Vehicle:
 
 
 def to_vertex_list(
-    points: list,
+    points: list[list[float]] | list[list[int]],
 ) -> str:
     str_points = []
 
