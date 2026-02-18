@@ -5,9 +5,10 @@ from PIL import Image
 from base64 import b64encode
 from io import BytesIO
 
-from .schema import VehicleType, EvolutionRequest, GenerationResult
+from .schema import VehicleType, EvolutionRequest, GenerationResult, DropTestVideoResult
 
 from glider import optimization, vehicle, visualization
+from glider.constants import THINNESS_PENALTY_WEIGHT, MIN_THICKNESS_RATIO
 
 app = FastAPI()
 
@@ -51,6 +52,55 @@ async def view_vehicle(v: VehicleType):
 async def vehicle_fitness(v: VehicleType) -> float:
     test_vehicle = vehicle.Vehicle(**v.model_dump())
     return optimization.fitness_func(test_vehicle)
+
+
+@app.post("/vehicle/drop_test_video/")
+async def drop_test_video(v: VehicleType) -> DropTestVideoResult:
+    """
+    Run a drop test and return videos from both camera angles along with fitness score.
+    Renders the simulation from 'fixed' (stationary) and 'track' (body-attached) cameras.
+    """
+    import mujoco
+
+    test_vehicle = vehicle.Vehicle(**v.model_dump())
+
+    # Build the drop test world XML (includes both cameras)
+    world_xml = optimization.drop_test_glider(test_vehicle, height=optimization.DROP_TEST_HEIGHT)
+
+    # Create model and data
+    model = mujoco.MjModel.from_xml_string(world_xml)
+    data = mujoco.MjData(model)
+
+    # Render frames from both cameras until collision
+    fixed_frames = visualization.render_to_collision(model, data, framerate=60, camera_name="fixed", show=False)
+
+    # Reset simulation for second camera
+    mujoco.mj_resetData(model, data)
+    track_frames = visualization.render_to_collision(model, data, framerate=60, camera_name="track", show=False)
+
+    # Calculate fitness (need to reset and run simulation again)
+    mujoco.mj_resetData(model, data)
+    while len(data.contact) < 1:
+        mujoco.mj_step(model, data)
+
+    distance = abs(data.geom("vehicle-wing").xpos[0])
+    ratio = optimization.thinness_ratio(test_vehicle.vertices)
+    thinness_penalty = 0.0
+    if ratio < MIN_THICKNESS_RATIO:
+        thinness_penalty = THINNESS_PENALTY_WEIGHT * (
+            (MIN_THICKNESS_RATIO - ratio) / MIN_THICKNESS_RATIO
+        )
+    fitness = distance - thinness_penalty
+
+    # Encode videos to base64
+    fixed_video = visualization.encode_video_to_base64(fixed_frames, framerate=60)
+    track_video = visualization.encode_video_to_base64(track_frames, framerate=60)
+
+    return DropTestVideoResult(
+        fitness=fitness,
+        fixed_camera_video=fixed_video,
+        track_camera_video=track_video
+    )
 
 
 @app.post("/evolution/run")

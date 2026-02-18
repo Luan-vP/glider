@@ -114,6 +114,38 @@ export async function getVehicleFitness(vehicle: VehicleType): Promise<number> {
 }
 
 /**
+ * Result from drop test with video rendering.
+ */
+export interface DropTestVideoResult {
+  fitness: number;
+  fixed_camera_video: string;
+  track_camera_video: string;
+}
+
+/**
+ * Runs a drop test with video rendering from both camera angles.
+ *
+ * @param vehicle - The vehicle to test
+ * @returns Fitness score and base64-encoded mp4 videos from fixed and track cameras
+ * @throws Error if the request fails
+ */
+export async function getDropTestVideo(vehicle: VehicleType): Promise<DropTestVideoResult> {
+  const response = await fetch(`${API_BASE}/vehicle/drop_test_video/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(vehicle),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to get drop test video: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
  * Runs evolutionary optimization with server-sent events streaming.
  * Each generation result is passed to the onGeneration callback as it arrives.
  *

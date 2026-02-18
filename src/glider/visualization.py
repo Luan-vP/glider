@@ -137,3 +137,29 @@ def render_for_time_secs(
         media.show_video(frames, fps=framerate)
 
     return frames
+
+
+def encode_video_to_base64(frames: list[np.ndarray], framerate: int = 60) -> str:
+    """
+    Encode a list of frames as an mp4 video and return as base64 string.
+
+    Args:
+        frames: List of numpy arrays representing video frames
+        framerate: Frames per second for the video
+
+    Returns:
+        Base64-encoded mp4 video string
+    """
+    from io import BytesIO
+    from base64 import b64encode
+
+    # Write video to bytes buffer
+    buffer = BytesIO()
+    media.write_video(buffer, frames, fps=framerate, codec='h264')
+    buffer.seek(0)
+
+    # Encode to base64
+    video_bytes = buffer.getvalue()
+    b64_video = b64encode(video_bytes)
+
+    return b64_video.decode('utf-8')
