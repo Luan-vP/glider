@@ -57,7 +57,7 @@ def test_evolution_run_endpoint(client):
 def test_evolution_run_with_pilot(client):
     """Test evolution endpoint with pilot enabled."""
     request_data = {
-        "population_size": 3,
+        "population_size": 5,
         "num_generations": 1,
         "pilot": True,
     }

@@ -5,10 +5,6 @@ from glider.vehicle import Vehicle
 
 def test_view_vehicle():
     v = Vehicle(num_vertices=10)
-    vehicle_xml, vehicle_asset = v.create_glider_from_vertices()
 
-    pixels = visualization.view_vehicle(
-        vehicle_xml,
-        vehicle_asset,
-    )
+    pixels = visualization.view_vehicle(v)
     assert pixels.shape == (FRAME_HEIGHT, FRAME_WIDTH, 3)

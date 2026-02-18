@@ -70,7 +70,7 @@ def test_specify_mass():
     vehicle = Vehicle(num_vertices=8, mass_kg=1.0)
     assert vehicle.mass_kg == 1.0
 
-    glider_xml, glider_asset = vehicle.create_glider_from_vertices()
+    glider_xml, glider_asset = vehicle.xml()
     assert glider_xml.index('mass="1.0"') > 0
 
 
@@ -80,10 +80,6 @@ def test_faces(cube_vertices, cube_faces):
 
     vehicle_2 = Vehicle(vertices=cube_vertices, faces=cube_faces)
     assert vehicle_2.faces == cube_faces
-
-    # TODO Test that this is a cube
-
-    # TODO test that this works for non-convex groups
 
 
 def test_max_dim():

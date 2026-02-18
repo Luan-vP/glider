@@ -1,4 +1,3 @@
-
 from glider.optimization import (
     create_point,
     fitness_func,
@@ -18,17 +17,20 @@ def test_create_point():
 
 
 def test_iterate_population():
-    population = iterate_population(
+    ranking, population = iterate_population(
         [Vehicle(num_vertices=10, max_dim_m=1.5) for _ in range(10)],
         survival_weight=0.5,
     )
 
-    fitnesses = sorted([fitness_func(vehicle) for vehicle in population], reverse=True)
+    fitnesses = sorted(
+        [fitness_func(vehicle) for vehicle in population],
+        reverse=True,
+    )
 
     assert fitnesses[0] > fitnesses[1]
 
     for _ in range(10):
-        population = iterate_population(
+        ranking, population = iterate_population(
             population,
             survival_weight=0.3,
             cloning_weight=0.3,
