@@ -8,7 +8,6 @@ from io import BytesIO
 from .schema import VehicleType, EvolutionRequest, GenerationResult, DropTestVideoResult
 
 from glider import optimization, vehicle, visualization
-from glider.constants import THINNESS_PENALTY_WEIGHT, MIN_THICKNESS_RATIO
 
 app = FastAPI()
 
@@ -78,19 +77,8 @@ async def drop_test_video(v: VehicleType) -> DropTestVideoResult:
     mujoco.mj_resetData(model, data)
     track_frames = visualization.render_to_collision(model, data, framerate=60, camera_name="track", show=False)
 
-    # Calculate fitness (need to reset and run simulation again)
-    mujoco.mj_resetData(model, data)
-    while len(data.contact) < 1:
-        mujoco.mj_step(model, data)
-
-    distance = abs(data.geom("vehicle-wing").xpos[0])
-    ratio = optimization.thinness_ratio(test_vehicle.vertices)
-    thinness_penalty = 0.0
-    if ratio < MIN_THICKNESS_RATIO:
-        thinness_penalty = THINNESS_PENALTY_WEIGHT * (
-            (MIN_THICKNESS_RATIO - ratio) / MIN_THICKNESS_RATIO
-        )
-    fitness = distance - thinness_penalty
+    # Calculate fitness using the standard fitness function
+    fitness = optimization.fitness_func(test_vehicle)
 
     # Encode videos to base64
     fixed_video = visualization.encode_video_to_base64(fixed_frames, framerate=60)

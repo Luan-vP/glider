@@ -150,16 +150,24 @@ def encode_video_to_base64(frames: list[np.ndarray], framerate: int = 60) -> str
     Returns:
         Base64-encoded mp4 video string
     """
-    from io import BytesIO
+    import tempfile
     from base64 import b64encode
 
-    # Write video to bytes buffer
-    buffer = BytesIO()
-    media.write_video(buffer, frames, fps=framerate, codec='h264')
-    buffer.seek(0)
+    # Write video to temporary file (mediapy expects file path, not BytesIO)
+    with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as tmp_file:
+        tmp_path = tmp_file.name
 
-    # Encode to base64
-    video_bytes = buffer.getvalue()
-    b64_video = b64encode(video_bytes)
+    try:
+        media.write_video(tmp_path, frames, fps=framerate, codec='h264')
 
-    return b64_video.decode('utf-8')
+        # Read the video file and encode to base64
+        with open(tmp_path, 'rb') as f:
+            video_bytes = f.read()
+        b64_video = b64encode(video_bytes)
+
+        return b64_video.decode('utf-8')
+    finally:
+        # Clean up temporary file
+        import os
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
