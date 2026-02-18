@@ -1,9 +1,10 @@
 import json
+
 import pytest
 from fastapi.testclient import TestClient
 
+from glider.serving.schema import GenerationResult
 from glider.serving.server import app
-from glider.serving.schema import EvolutionRequest, GenerationResult
 
 
 @pytest.fixture

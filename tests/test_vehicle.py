@@ -1,4 +1,3 @@
-import mujoco
 import pytest
 
 from glider.vehicle import Vehicle

@@ -24,6 +24,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pytest",
+  "httpx",
   "mypy",
   "ruff>=0.4.0",
 ]
@@ -62,6 +63,7 @@ ruff = ">=0.4.0"
 [tool.mypy]
 strict = true
 ignore_missing_imports = true
+disable_error_code = ["type-arg"]
 
 [tool.ruff]
 line-length = 88

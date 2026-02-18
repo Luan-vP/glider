@@ -1,12 +1,9 @@
-import pytest
 
 from glider.optimization import (
     create_point,
-    iterate_population,
     fitness_func,
-    drop_test_glider,
+    iterate_population,
 )
-
 from glider.vehicle import Vehicle
 
 
@@ -37,6 +34,9 @@ def test_iterate_population():
             cloning_weight=0.3,
         )
 
-        fitnesses_2 = sorted([fitness_func(vehicle) for vehicle in population], reverse=True)
+        fitnesses_2 = sorted(
+            [fitness_func(vehicle) for vehicle in population],
+            reverse=True,
+        )
 
         assert fitnesses_2[0] >= fitnesses[0]
