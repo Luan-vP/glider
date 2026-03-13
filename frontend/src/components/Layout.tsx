@@ -7,6 +7,7 @@ interface LayoutProps {
   dropTestPanel?: React.ReactNode;
   vehiclePreview?: React.ReactNode;
   evolutionDashboard?: React.ReactNode;
+  trajectoryViewer?: React.ReactNode;
 }
 
 export function Layout({
@@ -14,6 +15,7 @@ export function Layout({
   dropTestPanel,
   vehiclePreview,
   evolutionDashboard,
+  trajectoryViewer,
 }: LayoutProps) {
   const [mode, setMode] = useState<Mode>('single');
 
@@ -92,9 +94,11 @@ export function Layout({
                 </div>
               )
             ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                {mode === 'single' ? 'Switch to Evolution mode to view dashboard' : ''}
-              </div>
+              trajectoryViewer || (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  Trajectory Viewer
+                </div>
+              )
             )}
           </div>
         </div>
@@ -128,12 +132,20 @@ export function Layout({
             )}
           </div>
 
-          {/* Evolution Dashboard (if in evolution mode) */}
-          {mode === 'evolution' && (
+          {/* Trajectory Viewer (single mode) or Evolution Dashboard */}
+          {mode === 'evolution' ? (
             <div className="bg-gray-800 rounded-lg border border-gray-700 p-4 min-h-[300px]">
               {evolutionDashboard || (
                 <div className="flex items-center justify-center h-full text-gray-500">
                   Evolution Dashboard
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-gray-800 rounded-lg border border-gray-700 p-4 min-h-[400px]">
+              {trajectoryViewer || (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  Trajectory Viewer
                 </div>
               )}
             </div>

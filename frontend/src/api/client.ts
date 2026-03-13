@@ -4,6 +4,7 @@
  */
 
 import type { VehicleType, GenerationResult } from '../types/vehicle';
+import type { TrajectoryReplayData } from '../types/trajectory';
 
 /**
  * Base API URL, configurable via VITE_API_URL environment variable.
@@ -140,6 +141,34 @@ export async function getDropTestVideo(vehicle: VehicleType): Promise<DropTestVi
 
   if (!response.ok) {
     throw new Error(`Failed to get drop test video: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Runs a drop test and returns per-frame trajectory data for 3D replay.
+ *
+ * @param vehicle - The vehicle to test
+ * @param sampleRate - Trajectory sample rate in Hz (30 or 60)
+ * @returns Trajectory frames, fitness, and vehicle geometry
+ * @throws Error if the request fails
+ */
+export async function getTrajectoryReplay(
+  vehicle: VehicleType,
+  sampleRate: number = 60,
+): Promise<TrajectoryReplayData> {
+  const response = await fetch(
+    `${API_BASE}/vehicle/drop_test_trajectory/?sample_rate=${sampleRate}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(vehicle),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to get trajectory: ${response.status} ${response.statusText}`);
   }
 
   return response.json();

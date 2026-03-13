@@ -69,6 +69,17 @@ def thinness_ratio(vertices: list[list[float]]) -> float:
     return float(min_axis / max_axis)
 
 
+def _compute_fitness(distance: float, vertices: list[list[float]]) -> float:
+    """Compute fitness from glide distance and vertex geometry."""
+    ratio = thinness_ratio(vertices)
+    thinness_penalty = 0.0
+    if ratio < MIN_THICKNESS_RATIO:
+        thinness_penalty = THINNESS_PENALTY_WEIGHT * (
+            (MIN_THICKNESS_RATIO - ratio) / MIN_THICKNESS_RATIO
+        )
+    return float(distance - thinness_penalty)
+
+
 def fitness_func(test_vehicle: Vehicle) -> float:
     test_xml = drop_test_glider(test_vehicle, height=DROP_TEST_HEIGHT)
 
@@ -80,14 +91,34 @@ def fitness_func(test_vehicle: Vehicle) -> float:
         mujoco.mj_step(model, data)
 
     distance = abs(data.geom("vehicle-wing").xpos[0])
-    ratio = thinness_ratio(test_vehicle.vertices)
-    thinness_penalty = 0.0
-    if ratio < MIN_THICKNESS_RATIO:
-        thinness_penalty = THINNESS_PENALTY_WEIGHT * (
-            (MIN_THICKNESS_RATIO - ratio) / MIN_THICKNESS_RATIO
-        )
+    return _compute_fitness(distance, test_vehicle.vertices)
 
-    return float(distance - thinness_penalty)
+
+def simulate_trajectory(
+    test_vehicle: Vehicle,
+    sample_rate: int = 60,
+) -> tuple[list[dict[str, object]], float]:
+    """Run a drop test and return sampled trajectory data plus fitness."""
+    test_xml = drop_test_glider(test_vehicle, height=DROP_TEST_HEIGHT)
+
+    model = mujoco.MjModel.from_xml_string(test_xml)
+    data = mujoco.MjData(model)
+    mujoco.mj_resetData(model, data)
+
+    frames: list[dict[str, object]] = []
+
+    while len(data.contact) < 1:
+        mujoco.mj_step(model, data)
+        while len(frames) < data.time * sample_rate:
+            frames.append({
+                "time": float(data.time),
+                "position": data.body("body").xpos.tolist(),
+                "orientation": data.body("body").xquat.tolist(),
+            })
+
+    distance = abs(data.geom("vehicle-wing").xpos[0])
+    fitness = _compute_fitness(distance, test_vehicle.vertices)
+    return frames, fitness
 
 
 def iterate_population(

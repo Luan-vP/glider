@@ -34,3 +34,17 @@ class DropTestVideoResult(BaseModel):
     fitness: float
     fixed_camera_video: str
     track_camera_video: str
+
+
+class TrajectoryFrame(BaseModel):
+    time: float
+    position: list[float]
+    orientation: list[float]
+
+
+class DropTestTrajectoryResult(BaseModel):
+    fitness: float
+    sample_rate: int
+    frames: list[TrajectoryFrame]
+    vertices: list[list[float]]
+    faces: list[list[int]]

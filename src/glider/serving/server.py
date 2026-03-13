@@ -12,9 +12,11 @@ from glider import optimization, vehicle, visualization
 from glider.constants import WING_DENSITY
 
 from .schema import (
+    DropTestTrajectoryResult,
     DropTestVideoResult,
     EvolutionRequest,
     GenerationResult,
+    TrajectoryFrame,
     VehicleType,
 )
 
@@ -40,8 +42,17 @@ def read_root() -> dict[str, str]:
 
 
 @app.get("/vehicle/")
-async def create_vehicle() -> Any:
-    return vehicle.Vehicle()
+async def create_vehicle() -> VehicleType:
+    v = vehicle.Vehicle()
+    return VehicleType(
+        vertices=v.vertices,
+        faces=v.faces,
+        max_dim_m=v.max_dim_m,
+        mass_kg=v.mass_kg,
+        orientation=v.orientation,
+        wing_density=v.wing_density,
+        pilot=v.pilot,
+    )
 
 
 @app.post("/vehicle/drop_test/")
@@ -105,6 +116,27 @@ async def drop_test_video(
         fitness=fitness,
         fixed_camera_video=fixed_video,
         track_camera_video=track_video,
+    )
+
+
+@app.post("/vehicle/drop_test_trajectory/")
+async def drop_test_trajectory(
+    v: VehicleType,
+    sample_rate: int = 60,
+) -> DropTestTrajectoryResult:
+    """Run a drop test and return per-frame trajectory data plus fitness."""
+    test_vehicle = vehicle.Vehicle(**v.model_dump())
+
+    raw_frames, fitness = optimization.simulate_trajectory(
+        test_vehicle, sample_rate=sample_rate
+    )
+
+    return DropTestTrajectoryResult(
+        fitness=fitness,
+        sample_rate=sample_rate,
+        frames=[TrajectoryFrame(**f) for f in raw_frames],
+        vertices=test_vehicle.vertices,
+        faces=test_vehicle.faces,
     )
 
 
