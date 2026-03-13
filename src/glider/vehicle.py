@@ -208,6 +208,26 @@ class Vehicle:
         asset_xml = self.get_wing_asset()
         return body_xml, asset_xml
 
+    def to_schema(self) -> dict:
+        """Serialize this Vehicle to a dict compatible with VehicleType schema."""
+        return {
+            "vertices": self.vertices,
+            "faces": self.faces,
+            "max_dim_m": self.max_dim_m,
+            "mass_kg": self.mass_kg,
+            "orientation": self.orientation,
+            "wing_density": self.wing_density,
+            "pilot": self.pilot,
+            "shape_type": "point_cloud",
+            "shape_params": (
+                self.shape_config.params_dict()
+                if self.shape_config is not None
+                else None
+            ),
+            "naca_params": None,
+            "parametric_params": None,
+        }
+
     def show(self) -> None:
         media.show_image(visualization.view_vehicle(self))
 

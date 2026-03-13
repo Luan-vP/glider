@@ -9,6 +9,10 @@ class VehicleType(BaseModel):
     orientation: list[float] | None
     wing_density: float | None
     pilot: bool = False
+    shape_type: str = "point_cloud"
+    naca_params: dict | None = None
+    parametric_params: dict | None = None
+    shape_params: dict | None = None
 
 
 class EvolutionRequest(BaseModel):
