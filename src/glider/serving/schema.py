@@ -24,6 +24,9 @@ class EvolutionRequest(BaseModel):
     pilot: bool = False
     mass_kg: float | None = None
     wing_density: float | None = None
+    shape_type: str = "point_cloud"
+    naca_params: dict | None = None
+    parametric_params: dict | None = None
 
 
 class GenerationResult(BaseModel):

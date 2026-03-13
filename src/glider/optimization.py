@@ -11,6 +11,7 @@ from .constants import (
     MIN_THICKNESS_RATIO,
     THINNESS_PENALTY_WEIGHT,
 )
+from .shapes import NacaConfig, ParametricConfig
 from .vehicle import Vehicle
 
 NUM_GENES = 10
@@ -128,6 +129,38 @@ def simulate_trajectory(
     return frames, fitness
 
 
+def _create_random_vehicle(
+    shape_type: str,
+    max_dim_m: float,
+    pilot: bool,
+    mass_kg: float | None,
+) -> Vehicle:
+    """Create a random Vehicle using the appropriate shape config."""
+    if shape_type == "naca":
+        shape_config = NacaConfig.random(max_dim_m=max_dim_m)
+        return Vehicle(
+            max_dim_m=max_dim_m,
+            pilot=pilot,
+            mass_kg=mass_kg,
+            shape_config=shape_config,
+        )
+    elif shape_type == "parametric":
+        shape_config = ParametricConfig.random()
+        return Vehicle(
+            max_dim_m=max_dim_m,
+            pilot=pilot,
+            mass_kg=mass_kg,
+            shape_config=shape_config,
+        )
+    else:
+        return Vehicle(
+            num_vertices=NUM_GENES,
+            max_dim_m=max_dim_m,
+            pilot=pilot,
+            mass_kg=mass_kg,
+        )
+
+
 def iterate_population(
     input_population: list[Vehicle],
     survival_weight: float = 0.3,
@@ -135,6 +168,7 @@ def iterate_population(
     max_dim_m: float = DEFAULT_MAX_WING_DIMENSION_M,
     pilot: bool = False,
     mass_kg: float | None = None,
+    shape_type: str = "point_cloud",
 ) -> tuple[list[tuple[Vehicle, float]], list[Vehicle]]:
     """
     Take an input population, and return a new population based on the
@@ -147,6 +181,8 @@ def iterate_population(
     max_dim_m:          The maximum dimension of a wing
     pilot:              Whether or not to add a pilot
     mass_kg:            The mass of the wing
+    shape_type:         The shape type to use for random generation
+                        ('point_cloud', 'naca', 'parametric')
     """
 
     population_size = len(input_population)
@@ -160,24 +196,30 @@ def iterate_population(
 
     clones: list[Vehicle] = []
     for i in range(int(population_size * cloning_weight)):
-        target_index = i % len(survivors)
+        target = survivors[i % len(survivors)]
 
-        clones.append(
-            Vehicle(
-                vertices=(survivors[target_index].mutate()),
-                max_dim_m=survivors[target_index].max_dim_m,
-                pilot=pilot,
-                mass_kg=mass_kg,
+        if target.shape_config is not None:
+            new_shape_config = target.shape_config.mutate()
+            clones.append(
+                Vehicle(
+                    max_dim_m=target.max_dim_m,
+                    pilot=pilot,
+                    mass_kg=mass_kg,
+                    shape_config=new_shape_config,
+                )
             )
-        )
+        else:
+            clones.append(
+                Vehicle(
+                    vertices=target.mutate(),
+                    max_dim_m=target.max_dim_m,
+                    pilot=pilot,
+                    mass_kg=mass_kg,
+                )
+            )
 
     random_population = [
-        Vehicle(
-            num_vertices=NUM_GENES,
-            max_dim_m=max_dim_m,
-            pilot=pilot,
-            mass_kg=mass_kg,
-        )
+        _create_random_vehicle(shape_type, max_dim_m, pilot, mass_kg)
         for _ in range(population_size - len(clones) - len(survivors))
     ]
 

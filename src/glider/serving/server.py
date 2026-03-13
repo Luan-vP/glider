@@ -9,6 +9,7 @@ from PIL import Image
 
 from glider import optimization, vehicle, visualization
 from glider.constants import WING_DENSITY
+from glider.shapes import NacaConfig, ParametricConfig
 
 from .factory import vehicle_from_schema
 from .schema import (
@@ -140,22 +141,45 @@ async def drop_test_trajectory(
     )
 
 
+def _make_initial_vehicle(req: EvolutionRequest) -> vehicle.Vehicle:
+    """Create a single initial population Vehicle for the given request."""
+    wing_density = req.wing_density if req.wing_density is not None else WING_DENSITY
+    shape_type = req.shape_type
+
+    if shape_type == "naca":
+        shape_config = NacaConfig.random(max_dim_m=req.max_dim_m)
+        return vehicle.Vehicle(
+            max_dim_m=req.max_dim_m,
+            pilot=req.pilot,
+            mass_kg=req.mass_kg,
+            wing_density=wing_density,
+            shape_config=shape_config,
+        )
+    elif shape_type == "parametric":
+        shape_config = ParametricConfig.random()
+        return vehicle.Vehicle(
+            max_dim_m=req.max_dim_m,
+            pilot=req.pilot,
+            mass_kg=req.mass_kg,
+            wing_density=wing_density,
+            shape_config=shape_config,
+        )
+    else:
+        return vehicle.Vehicle(
+            num_vertices=optimization.NUM_GENES,
+            max_dim_m=req.max_dim_m,
+            pilot=req.pilot,
+            mass_kg=req.mass_kg,
+            wing_density=wing_density,
+        )
+
+
 @app.post("/evolution/run")
 async def run_evolution(req: EvolutionRequest) -> StreamingResponse:
     def generate() -> Generator[str, None, None]:
-        # Create initial population
+        # Create initial population using shape-aware factory
         population = [
-            vehicle.Vehicle(
-                num_vertices=optimization.NUM_GENES,
-                max_dim_m=req.max_dim_m,
-                pilot=req.pilot,
-                mass_kg=req.mass_kg,
-                wing_density=(
-                    req.wing_density
-                    if req.wing_density is not None
-                    else WING_DENSITY
-                ),
-            )
+            _make_initial_vehicle(req)
             for _ in range(req.population_size)
         ]
 
@@ -168,6 +192,7 @@ async def run_evolution(req: EvolutionRequest) -> StreamingResponse:
                 max_dim_m=req.max_dim_m,
                 pilot=req.pilot,
                 mass_kg=req.mass_kg,
+                shape_type=req.shape_type,
             )
 
             # Extract results
@@ -177,20 +202,12 @@ async def run_evolution(req: EvolutionRequest) -> StreamingResponse:
                 sum(all_fitnesses) / len(all_fitnesses)
             )
 
-            # Create result object
+            # Create result object (uses to_schema() to include shape params)
             result = GenerationResult(
                 generation=gen,
                 best_fitness=best_fitness,
                 avg_fitness=avg_fitness,
-                best_vehicle=VehicleType(
-                    vertices=best_vehicle.vertices,
-                    faces=best_vehicle.faces,
-                    max_dim_m=best_vehicle.max_dim_m,
-                    mass_kg=best_vehicle.mass_kg,
-                    orientation=best_vehicle.orientation,
-                    wing_density=best_vehicle.wing_density,
-                    pilot=best_vehicle.pilot,
-                ),
+                best_vehicle=VehicleType(**best_vehicle.to_schema()),
                 population_fitness=all_fitnesses,
             )
 
