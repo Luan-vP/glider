@@ -10,6 +10,7 @@ from PIL import Image
 from glider import optimization, vehicle, visualization
 from glider.constants import WING_DENSITY
 
+from .factory import vehicle_from_schema
 from .schema import (
     DropTestTrajectoryResult,
     DropTestVideoResult,
@@ -56,13 +57,13 @@ async def create_vehicle() -> VehicleType:
 
 @app.post("/vehicle/drop_test/")
 async def drop_test_vehicle(v: VehicleType) -> str:
-    test_vehicle = vehicle.Vehicle(**v.model_dump())
+    test_vehicle = vehicle_from_schema(v)
     return optimization.drop_test_glider(test_vehicle)
 
 
 @app.post("/vehicle/view/")
 async def view_vehicle(v: VehicleType) -> dict[str, str]:
-    test_vehicle = vehicle.Vehicle(**v.model_dump())
+    test_vehicle = vehicle_from_schema(v)
     buf = BytesIO()
     Image.fromarray(
         visualization.view_vehicle(test_vehicle)
@@ -73,7 +74,7 @@ async def view_vehicle(v: VehicleType) -> dict[str, str]:
 
 @app.post("/vehicle/fitness/")
 async def vehicle_fitness(v: VehicleType) -> float:
-    test_vehicle = vehicle.Vehicle(**v.model_dump())
+    test_vehicle = vehicle_from_schema(v)
     return optimization.fitness_func(test_vehicle)
 
 
@@ -84,7 +85,7 @@ async def drop_test_video(
     """Run a drop test and return videos from both camera angles."""
     import mujoco
 
-    test_vehicle = vehicle.Vehicle(**v.model_dump())
+    test_vehicle = vehicle_from_schema(v)
 
     world_xml = optimization.drop_test_glider(
         test_vehicle, height=optimization.DROP_TEST_HEIGHT
@@ -124,7 +125,7 @@ async def drop_test_trajectory(
     sample_rate: int = 60,
 ) -> DropTestTrajectoryResult:
     """Run a drop test and return per-frame trajectory data plus fitness."""
-    test_vehicle = vehicle.Vehicle(**v.model_dump())
+    test_vehicle = vehicle_from_schema(v)
 
     raw_frames, fitness = optimization.simulate_trajectory(
         test_vehicle, sample_rate=sample_rate
