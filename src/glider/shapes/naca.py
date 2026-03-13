@@ -114,16 +114,16 @@ class NacaConfig(ShapeConfig):
         chord = float(np.random.uniform(0.1, max_dim_m / 2))
 
         if naca_type == 4:
-            M = np.random.randint(0, 10)
-            P = np.random.randint(1, 10) if M > 0 else 0
-            T = np.random.randint(4, 36)
-            digits = f"{M}{P}{T:02d}"
+            m = np.random.randint(0, 10)
+            p = np.random.randint(1, 10) if m > 0 else 0
+            t = np.random.randint(4, 36)
+            digits = f"{m}{p}{t:02d}"
         else:
-            L = np.random.randint(1, 6)
-            P = np.random.randint(1, 6)
-            Q = 0  # non-reflexed
-            T = np.random.randint(4, 36)
-            digits = f"{L}{P}{Q}{T:02d}"
+            cl = np.random.randint(1, 6)
+            p = np.random.randint(1, 6)
+            q = 0  # non-reflexed
+            t = np.random.randint(4, 36)
+            digits = f"{cl}{p}{q}{t:02d}"
 
         return cls(digits=digits, span=span, chord=chord, max_dim_m=max_dim_m)
 
@@ -174,32 +174,46 @@ class NacaConfig(ShapeConfig):
         return profile.tolist()
 
     def _naca4_profile(self) -> list[list[float]]:
-        M = int(self.digits[0]) / 100.0
-        P = int(self.digits[1]) / 10.0
-        T = int(self.digits[2:]) / 100.0
+        m_camber = int(self.digits[0]) / 100.0
+        p_pos = int(self.digits[1]) / 10.0
+        t_thick = int(self.digits[2:]) / 100.0
 
         beta = np.linspace(0, np.pi, self.num_profile_points)
         x = (1 - np.cos(beta)) / 2
 
         yc = np.zeros_like(x)
-        if M > 0 and P > 0:
-            below = x < P
-            yc[below] = (M / P**2) * (2 * P * x[below] - x[below] ** 2)
+        if m_camber > 0 and p_pos > 0:
+            below = x < p_pos
+            yc[below] = (
+                (m_camber / p_pos**2)
+                * (2 * p_pos * x[below] - x[below] ** 2)
+            )
             above = ~below
-            yc[above] = (M / (1 - P) ** 2) * (
-                1 - 2 * P + 2 * P * x[above] - x[above] ** 2
+            yc[above] = (
+                (m_camber / (1 - p_pos) ** 2)
+                * (
+                    1
+                    - 2 * p_pos
+                    + 2 * p_pos * x[above]
+                    - x[above] ** 2
+                )
             )
 
-        return self._build_profile(x, yc, self._thickness(T, x))
+        return self._build_profile(
+            x, yc, self._thickness(t_thick, x)
+        )
 
     def _naca5_profile(self) -> list[list[float]]:
-        P_digit = int(self.digits[1])
-        T = int(self.digits[3:]) / 100.0
+        p_digit = int(self.digits[1])
+        t_thick = int(self.digits[3:]) / 100.0
 
-        if P_digit not in _NACA5_TABLE:
-            raise ValueError(f"NACA 5-digit second digit must be 1–5, got: {P_digit}")
+        if p_digit not in _NACA5_TABLE:
+            raise ValueError(
+                "NACA 5-digit second digit must be 1-5, "
+                f"got: {p_digit}"
+            )
 
-        r, k1 = _NACA5_TABLE[P_digit]
+        r, k1 = _NACA5_TABLE[p_digit]
 
         beta = np.linspace(0, np.pi, self.num_profile_points)
         x = (1 - np.cos(beta)) / 2
@@ -210,4 +224,6 @@ class NacaConfig(ShapeConfig):
             (k1 * r**3 / 6) * (1 - x),
         )
 
-        return self._build_profile(x, yc, self._thickness(T, x))
+        return self._build_profile(
+            x, yc, self._thickness(t_thick, x)
+        )
