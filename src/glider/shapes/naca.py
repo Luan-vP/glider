@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -6,7 +6,8 @@ import numpy as np
 from ..constants import DEFAULT_MAX_WING_DIMENSION_M, MUTATION_RATIO
 from .base import ShapeConfig
 
-# Tabulated (r, k1) values for NACA 5-digit non-reflexed camber line, keyed by P digit (1-5).
+# Tabulated (r, k1) values for NACA 5-digit non-reflexed
+# camber line, keyed by P digit (1-5).
 _NACA5_TABLE: dict[int, tuple[float, float]] = {
     1: (0.0580, 361.400),
     2: (0.1260, 51.640),
@@ -18,7 +19,7 @@ _NACA5_TABLE: dict[int, tuple[float, float]] = {
 
 @dataclass
 class NacaConfig(ShapeConfig):
-    """Shape config for NACA 4-digit and 5-digit airfoil profiles extruded into 3D wings."""
+    """NACA 4/5-digit airfoil profiles extruded into 3D."""
 
     digits: str
     span: float
@@ -46,9 +47,13 @@ class NacaConfig(ShapeConfig):
 
         if len(digits_list) == 4:
             if np.random.random() < 0.3:
-                digits_list[0] = str(int(np.clip(int(digits_list[0]) + np.random.choice([-1, 1]), 0, 9)))
+                val = int(digits_list[0])
+                val += np.random.choice([-1, 1])
+                digits_list[0] = str(int(np.clip(val, 0, 9)))
             if np.random.random() < 0.3:
-                digits_list[1] = str(int(np.clip(int(digits_list[1]) + np.random.choice([-1, 1]), 1, 9)))
+                val = int(digits_list[1])
+                val += np.random.choice([-1, 1])
+                digits_list[1] = str(int(np.clip(val, 1, 9)))
             # Ensure P>=1 when M>0 (avoids division by zero in camber formula)
             if int(digits_list[0]) > 0 and int(digits_list[1]) == 0:
                 digits_list[1] = "1"
@@ -59,9 +64,13 @@ class NacaConfig(ShapeConfig):
         else:
             # 5-digit: LPQXX
             if np.random.random() < 0.3:
-                digits_list[0] = str(int(np.clip(int(digits_list[0]) + np.random.choice([-1, 1]), 1, 5)))
+                val = int(digits_list[0])
+                val += np.random.choice([-1, 1])
+                digits_list[0] = str(int(np.clip(val, 1, 5)))
             if np.random.random() < 0.3:
-                digits_list[1] = str(int(np.clip(int(digits_list[1]) + np.random.choice([-1, 1]), 1, 5)))
+                val = int(digits_list[1])
+                val += np.random.choice([-1, 1])
+                digits_list[1] = str(int(np.clip(val, 1, 5)))
             # Keep Q (digits_list[2]) unchanged — reflexed variants are more complex
             t = int(self.digits[3:])
             if np.random.random() < 0.3:
@@ -94,8 +103,12 @@ class NacaConfig(ShapeConfig):
     @classmethod
     def random(cls, **kwargs: Any) -> "NacaConfig":
         """Create a random NacaConfig with valid NACA digits and dimensions."""
-        max_dim_m: float = float(kwargs.get("max_dim_m", DEFAULT_MAX_WING_DIMENSION_M))
-        naca_type: int = int(kwargs.get("naca_type", np.random.choice([4, 5])))
+        max_dim_m: float = float(
+            kwargs.get("max_dim_m", DEFAULT_MAX_WING_DIMENSION_M)
+        )
+        naca_type: int = int(
+            kwargs.get("naca_type", np.random.choice([4, 5]))
+        )
 
         span = float(np.random.uniform(0.3, max_dim_m))
         chord = float(np.random.uniform(0.1, max_dim_m / 2))
@@ -123,7 +136,10 @@ class NacaConfig(ShapeConfig):
             return self._naca4_profile()
         elif len(self.digits) == 5:
             return self._naca5_profile()
-        raise ValueError(f"NACA digits must be 4 or 5 characters, got: {self.digits!r}")
+        raise ValueError(
+            f"NACA digits must be 4 or 5 chars, got: "
+            f"{self.digits!r}"
+        )
 
     def _thickness(self, t: float, x: np.ndarray) -> np.ndarray:
         """Standard NACA symmetric thickness half-distribution."""
@@ -141,7 +157,7 @@ class NacaConfig(ShapeConfig):
         yc: np.ndarray,
         yt: np.ndarray,
     ) -> list[list[float]]:
-        """Combine camber line and thickness into a closed 2D airfoil profile scaled by chord."""
+        """Combine camber + thickness into a closed profile."""
         dyc_dx = np.gradient(yc, x)
         theta = np.arctan(dyc_dx)
 
@@ -169,7 +185,10 @@ class NacaConfig(ShapeConfig):
         if M > 0 and P > 0:
             below = x < P
             yc[below] = (M / P**2) * (2 * P * x[below] - x[below] ** 2)
-            yc[~below] = (M / (1 - P) ** 2) * (1 - 2 * P + 2 * P * x[~below] - x[~below] ** 2)
+            above = ~below
+            yc[above] = (M / (1 - P) ** 2) * (
+                1 - 2 * P + 2 * P * x[above] - x[above] ** 2
+            )
 
         return self._build_profile(x, yc, self._thickness(T, x))
 
