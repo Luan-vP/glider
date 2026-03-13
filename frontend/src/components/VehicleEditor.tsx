@@ -11,11 +11,17 @@
 
 import { useState } from 'react';
 import { useVehicleStore } from '../state/vehicle-store';
-import { getDefaultVehicle } from '../api/client';
+import { generateVehicle } from '../api/client';
+import { ShapeTypeSelector } from './ShapeTypeSelector';
+import { NacaParamsEditor } from './NacaParamsEditor';
+import { ParametricParamsEditor } from './ParametricParamsEditor';
 
 export function VehicleEditor() {
   const vehicle = useVehicleStore((state) => state.vehicle);
   const setVehicle = useVehicleStore((state) => state.setVehicle);
+  const shapeType = useVehicleStore((state) => state.shapeType);
+  const nacaParams = useVehicleStore((state) => state.nacaParams);
+  const parametricParams = useVehicleStore((state) => state.parametricParams);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,14 +53,24 @@ export function VehicleEditor() {
   };
 
   /**
-   * Generate a random vehicle by calling the backend API
+   * Generate a vehicle by calling the backend API with the selected shape type and params
    */
-  const handleGenerateRandom = async () => {
+  const handleGenerate = async () => {
     setIsGenerating(true);
     setError(null);
     try {
-      const randomVehicle = await getDefaultVehicle();
-      setVehicle(randomVehicle);
+      const generated = await generateVehicle(
+        shapeType,
+        shapeType === 'naca' ? nacaParams : null,
+        shapeType === 'parametric' ? parametricParams : null,
+        vehicle,
+      );
+      setVehicle({
+        ...generated,
+        shape_type: shapeType,
+        naca_params: shapeType === 'naca' ? nacaParams : null,
+        parametric_params: shapeType === 'parametric' ? parametricParams : null,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate vehicle');
     } finally {
@@ -67,11 +83,11 @@ export function VehicleEditor() {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-white">Vehicle Parameters</h2>
         <button
-          onClick={handleGenerateRandom}
+          onClick={handleGenerate}
           disabled={isGenerating}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-md font-medium transition-colors"
         >
-          {isGenerating ? 'Generating...' : 'Generate Random Vehicle'}
+          {isGenerating ? 'Generating...' : 'Generate'}
         </button>
       </div>
 
@@ -80,6 +96,13 @@ export function VehicleEditor() {
           {error}
         </div>
       )}
+
+      {/* Shape type selector */}
+      <ShapeTypeSelector />
+
+      {/* Shape-specific parameter editors */}
+      {shapeType === 'naca' && <NacaParamsEditor />}
+      {shapeType === 'parametric' && <ParametricParamsEditor />}
 
       {/* Vertex count display (read-only) */}
       {vehicle.vertices && (

@@ -3,7 +3,7 @@
  * All functions use the native fetch API and throw errors on failure.
  */
 
-import type { VehicleType, GenerationResult } from '../types/vehicle';
+import type { NacaParams, ParametricParams, ShapeType, VehicleType, GenerationResult } from '../types/vehicle';
 import type { TrajectoryReplayData } from '../types/trajectory';
 
 /**
@@ -39,6 +39,54 @@ export async function getDefaultVehicle(): Promise<VehicleType> {
 
   if (!response.ok) {
     throw new Error(`Failed to get default vehicle: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Generates a vehicle from the given shape type and parameters.
+ * For 'point_cloud', returns a random vehicle. For 'naca' and 'parametric',
+ * generates deterministic geometry from the supplied params.
+ *
+ * @param shapeType - The shape type to generate
+ * @param nacaParams - NACA parameters (required when shapeType is 'naca')
+ * @param parametricParams - Parametric parameters (required when shapeType is 'parametric')
+ * @param baseVehicle - Optional base vehicle to inherit max_dim_m, mass_kg, etc.
+ * @returns A VehicleType with computed vertices/faces
+ * @throws Error if the request fails
+ */
+export async function generateVehicle(
+  shapeType: ShapeType,
+  nacaParams?: NacaParams | null,
+  parametricParams?: ParametricParams | null,
+  baseVehicle?: Partial<VehicleType>,
+): Promise<VehicleType> {
+  if (shapeType === 'point_cloud') {
+    return getDefaultVehicle();
+  }
+
+  const payload: VehicleType = {
+    vertices: null,
+    faces: null,
+    max_dim_m: baseVehicle?.max_dim_m ?? 4.5,
+    mass_kg: baseVehicle?.mass_kg ?? null,
+    orientation: baseVehicle?.orientation ?? [0, 0, 0],
+    wing_density: baseVehicle?.wing_density ?? 0.4,
+    pilot: baseVehicle?.pilot ?? false,
+    shape_type: shapeType,
+    naca_params: nacaParams ?? null,
+    parametric_params: parametricParams ?? null,
+  };
+
+  const response = await fetch(`${API_BASE}/vehicle/generate/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to generate vehicle: ${response.status} ${response.statusText}`);
   }
 
   return response.json();

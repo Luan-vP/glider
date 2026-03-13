@@ -35,7 +35,14 @@ def vehicle_from_schema(v: VehicleType) -> Vehicle:
     if shape_type == "naca":
         params = v.naca_params or v.shape_params or {}
         if params:
-            cfg = NacaConfig(**params)
+            cfg = NacaConfig(
+                digits=str(
+                    params.get("digits", "0012")
+                ),
+                span=float(params.get("span", 2.0)),
+                chord=float(params.get("chord", 0.5)),
+                max_dim_m=max_dim,
+            )
         else:
             cfg = NacaConfig.random(max_dim_m=max_dim)
         return Vehicle(
@@ -49,10 +56,24 @@ def vehicle_from_schema(v: VehicleType) -> Vehicle:
 
     if shape_type == "parametric":
         params = (
-            v.parametric_params or v.shape_params or {}
+            v.parametric_params
+            or v.shape_params
+            or {}
         )
         if params:
-            cfg = ParametricConfig(**params)
+            cfg = ParametricConfig(
+                max_camber=float(
+                    params.get("max_camber", 0.02)
+                ),
+                camber_position=float(
+                    params.get("camber_position", 0.4)
+                ),
+                max_thickness=float(
+                    params.get("max_thickness", 0.12)
+                ),
+                span=float(params.get("span", 2.0)),
+                chord=float(params.get("chord", 0.5)),
+            )
         else:
             cfg = ParametricConfig.random()
         return Vehicle(
