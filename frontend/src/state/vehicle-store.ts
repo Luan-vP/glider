@@ -10,7 +10,17 @@
  */
 
 import { create } from 'zustand';
-import { DEFAULT_VEHICLE, VehicleType, GenerationResult, FitnessRecord } from '../types/vehicle';
+import {
+  DEFAULT_NACA_PARAMS,
+  DEFAULT_PARAMETRIC_PARAMS,
+  DEFAULT_VEHICLE,
+  FitnessRecord,
+  GenerationResult,
+  NacaParams,
+  ParametricParams,
+  ShapeType,
+  VehicleType,
+} from '../types/vehicle';
 
 export interface AppState {
   // ============================================================
@@ -22,6 +32,28 @@ export interface AppState {
 
   /** Update the current vehicle (called by VehicleEditor) */
   setVehicle: (vehicle: VehicleType) => void;
+
+  // ============================================================
+  // Shape Type & Params
+  // ============================================================
+
+  /** Currently selected shape type */
+  shapeType: ShapeType;
+
+  /** Set the active shape type */
+  setShapeType: (shapeType: ShapeType) => void;
+
+  /** NACA airfoil parameters */
+  nacaParams: NacaParams;
+
+  /** Update NACA params */
+  setNacaParams: (params: NacaParams) => void;
+
+  /** Parametric airfoil parameters */
+  parametricParams: ParametricParams;
+
+  /** Update parametric params */
+  setParametricParams: (params: ParametricParams) => void;
 
   // ============================================================
   // Preview State
@@ -91,6 +123,19 @@ export const useVehicleStore = create<AppState>((set) => ({
   vehicle: DEFAULT_VEHICLE,
 
   setVehicle: (vehicle) => set({ vehicle }),
+
+  // Initial shape type state
+  shapeType: 'point_cloud',
+
+  setShapeType: (shapeType) => set({ shapeType }),
+
+  nacaParams: DEFAULT_NACA_PARAMS,
+
+  setNacaParams: (nacaParams) => set({ nacaParams }),
+
+  parametricParams: DEFAULT_PARAMETRIC_PARAMS,
+
+  setParametricParams: (parametricParams) => set({ parametricParams }),
 
   // Initial preview state
   previewLoading: false,

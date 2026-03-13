@@ -55,6 +55,24 @@ async def create_vehicle() -> VehicleType:
     )
 
 
+@app.post("/vehicle/generate/")
+async def generate_vehicle(v: VehicleType) -> VehicleType:
+    """Generate a vehicle from shape type and parameters, returning vertices/faces."""
+    generated = vehicle_from_schema(v)
+    return VehicleType(
+        vertices=generated.vertices,
+        faces=generated.faces,
+        max_dim_m=generated.max_dim_m,
+        mass_kg=generated.mass_kg,
+        orientation=generated.orientation,
+        wing_density=generated.wing_density,
+        pilot=generated.pilot,
+        shape_type=v.shape_type,
+        naca_params=v.naca_params,
+        parametric_params=v.parametric_params,
+    )
+
+
 @app.post("/vehicle/drop_test/")
 async def drop_test_vehicle(v: VehicleType) -> str:
     test_vehicle = vehicle_from_schema(v)
