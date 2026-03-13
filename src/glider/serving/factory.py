@@ -26,11 +26,21 @@ def vehicle_from_schema(v: VehicleType) -> Vehicle:
                 max_dim_m if max_dim_m is not None else DEFAULT_MAX_WING_DIMENSION_M
             ),
         )
+        max_dim = (
+            v.max_dim_m
+            if v.max_dim_m is not None
+            else DEFAULT_MAX_WING_DIMENSION_M
+        )
+        wing_density = (
+            v.wing_density
+            if v.wing_density is not None
+            else WING_DENSITY
+        )
         return Vehicle(
-            max_dim_m=v.max_dim_m,
+            max_dim_m=max_dim,
             mass_kg=v.mass_kg,
             orientation=v.orientation or [0.0, 0.0, 0.0],
-            wing_density=v.wing_density if v.wing_density is not None else WING_DENSITY,
+            wing_density=wing_density,
             pilot=v.pilot,
             shape_config=shape_config,
         )
