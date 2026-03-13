@@ -141,15 +141,18 @@ class NacaConfig(ShapeConfig):
             f"{self.digits!r}"
         )
 
-    def _thickness(self, t: float, x: np.ndarray) -> np.ndarray:
-        """Standard NACA symmetric thickness half-distribution."""
-        return (t / 0.2) * (
+    def _thickness(
+        self, t: float, x: np.ndarray
+    ) -> np.ndarray:
+        """Standard NACA symmetric thickness distribution."""
+        result: np.ndarray = (t / 0.2) * (
             0.2969 * np.sqrt(np.maximum(x, 0.0))
             - 0.1260 * x
             - 0.3516 * x**2
             + 0.2843 * x**3
             - 0.1015 * x**4
         )
+        return result
 
     def _build_profile(
         self,
@@ -171,7 +174,8 @@ class NacaConfig(ShapeConfig):
         lower = np.stack([xl, yl], axis=1)
         profile = np.concatenate([upper, lower[-2:0:-1]], axis=0) * self.chord
 
-        return profile.tolist()
+        result: list[list[float]] = profile.tolist()
+        return result
 
     def _naca4_profile(self) -> list[list[float]]:
         m_camber = int(self.digits[0]) / 100.0
