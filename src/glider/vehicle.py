@@ -210,6 +210,21 @@ class Vehicle:
 
     def to_schema(self) -> dict:
         """Serialize this Vehicle to a dict compatible with VehicleType schema."""
+        from .shapes import NacaConfig, ParametricConfig
+
+        if isinstance(self.shape_config, NacaConfig):
+            shape_type = "naca"
+            naca_params = self.shape_config.params_dict()
+            parametric_params = None
+        elif isinstance(self.shape_config, ParametricConfig):
+            shape_type = "parametric"
+            naca_params = None
+            parametric_params = self.shape_config.params_dict()
+        else:
+            shape_type = "point_cloud"
+            naca_params = None
+            parametric_params = None
+
         return {
             "vertices": self.vertices,
             "faces": self.faces,
@@ -218,14 +233,14 @@ class Vehicle:
             "orientation": self.orientation,
             "wing_density": self.wing_density,
             "pilot": self.pilot,
-            "shape_type": "point_cloud",
+            "shape_type": shape_type,
             "shape_params": (
                 self.shape_config.params_dict()
                 if self.shape_config is not None
                 else None
             ),
-            "naca_params": None,
-            "parametric_params": None,
+            "naca_params": naca_params,
+            "parametric_params": parametric_params,
         }
 
     def show(self) -> None:

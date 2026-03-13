@@ -32,6 +32,59 @@ def vehicle_from_schema(v: VehicleType) -> Vehicle:
 
     cfg: ShapeConfig
 
+    if shape_type == "naca":
+        params = v.naca_params or v.shape_params or {}
+        if params:
+            cfg = NacaConfig(
+                digits=str(
+                    params.get("digits", "0012")
+                ),
+                span=float(params.get("span", 2.0)),
+                chord=float(params.get("chord", 0.5)),
+                max_dim_m=max_dim,
+            )
+        else:
+            cfg = NacaConfig.random(max_dim_m=max_dim)
+        return Vehicle(
+            max_dim_m=max_dim,
+            mass_kg=v.mass_kg,
+            orientation=v.orientation or [0.0, 0.0, 0.0],
+            wing_density=wing_density,
+            pilot=v.pilot,
+            shape_config=cfg,
+        )
+
+    if shape_type == "parametric":
+        params = (
+            v.parametric_params
+            or v.shape_params
+            or {}
+        )
+        if params:
+            cfg = ParametricConfig(
+                max_camber=float(
+                    params.get("max_camber", 0.02)
+                ),
+                camber_position=float(
+                    params.get("camber_position", 0.4)
+                ),
+                max_thickness=float(
+                    params.get("max_thickness", 0.12)
+                ),
+                span=float(params.get("span", 2.0)),
+                chord=float(params.get("chord", 0.5)),
+            )
+        else:
+            cfg = ParametricConfig.random()
+        return Vehicle(
+            max_dim_m=max_dim,
+            mass_kg=v.mass_kg,
+            orientation=v.orientation or [0.0, 0.0, 0.0],
+            wing_density=wing_density,
+            pilot=v.pilot,
+            shape_config=cfg,
+        )
+
     if shape_type == "point_cloud":
         if v.shape_params is not None:
             vertices = v.shape_params.get(
@@ -51,47 +104,6 @@ def vehicle_from_schema(v: VehicleType) -> Vehicle:
                 if pc_max is not None
                 else DEFAULT_MAX_WING_DIMENSION_M
             ),
-        )
-        return Vehicle(
-            max_dim_m=max_dim,
-            mass_kg=v.mass_kg,
-            orientation=v.orientation or [0.0, 0.0, 0.0],
-            wing_density=wing_density,
-            pilot=v.pilot,
-            shape_config=cfg,
-        )
-
-    if shape_type == "naca":
-        params = v.naca_params or {}
-        cfg = NacaConfig(
-            digits=str(params.get("digits", "0012")),
-            span=float(params.get("span", 2.0)),
-            chord=float(params.get("chord", 0.5)),
-            max_dim_m=max_dim,
-        )
-        return Vehicle(
-            max_dim_m=max_dim,
-            mass_kg=v.mass_kg,
-            orientation=v.orientation or [0.0, 0.0, 0.0],
-            wing_density=wing_density,
-            pilot=v.pilot,
-            shape_config=cfg,
-        )
-
-    if shape_type == "parametric":
-        params = v.parametric_params or {}
-        cfg = ParametricConfig(
-            max_camber=float(
-                params.get("max_camber", 0.02)
-            ),
-            camber_position=float(
-                params.get("camber_position", 0.4)
-            ),
-            max_thickness=float(
-                params.get("max_thickness", 0.12)
-            ),
-            span=float(params.get("span", 2.0)),
-            chord=float(params.get("chord", 0.5)),
         )
         return Vehicle(
             max_dim_m=max_dim,
