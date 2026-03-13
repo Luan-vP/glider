@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import TypedDict
 
 import mujoco
 import numpy as np
@@ -14,6 +15,12 @@ from .vehicle import Vehicle
 
 NUM_GENES = 10
 DROP_TEST_HEIGHT = 50.0
+
+
+class TrajectoryFrameDict(TypedDict):
+    time: float
+    position: list[float]
+    orientation: list[float]
 
 
 def create_point(max_dim_m: float) -> list[float]:
@@ -97,7 +104,7 @@ def fitness_func(test_vehicle: Vehicle) -> float:
 def simulate_trajectory(
     test_vehicle: Vehicle,
     sample_rate: int = 60,
-) -> tuple[list[dict[str, object]], float]:
+) -> tuple[list[TrajectoryFrameDict], float]:
     """Run a drop test and return sampled trajectory data plus fitness."""
     test_xml = drop_test_glider(test_vehicle, height=DROP_TEST_HEIGHT)
 
@@ -105,7 +112,7 @@ def simulate_trajectory(
     data = mujoco.MjData(model)
     mujoco.mj_resetData(model, data)
 
-    frames: list[dict[str, object]] = []
+    frames: list[TrajectoryFrameDict] = []
 
     while len(data.contact) < 1:
         mujoco.mj_step(model, data)

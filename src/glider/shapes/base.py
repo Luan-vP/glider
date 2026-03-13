@@ -16,7 +16,7 @@ class ShapeConfig(ABC):
 
     @classmethod
     @abstractmethod
-    def random(cls, **kwargs) -> "ShapeConfig":
+    def random(cls, **kwargs: object) -> "ShapeConfig":
         """Create a random instance for use in an initial population."""
         ...
 

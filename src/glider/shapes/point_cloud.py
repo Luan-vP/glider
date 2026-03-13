@@ -42,7 +42,7 @@ class PointCloudConfig(ShapeConfig):
         cls,
         num_vertices: int = 30,
         max_dim_m: float = DEFAULT_MAX_WING_DIMENSION_M,
-        **kwargs,
+        **kwargs: object,
     ) -> "PointCloudConfig":
         """Create a random point cloud configuration."""
         vertices = [
