@@ -22,7 +22,9 @@ def vehicle_from_schema(v: VehicleType) -> Vehicle:
 
         shape_config = PointCloudConfig(
             vertices=vertices or [],
-            max_dim_m=max_dim_m if max_dim_m is not None else DEFAULT_MAX_WING_DIMENSION_M,
+            max_dim_m=(
+                max_dim_m if max_dim_m is not None else DEFAULT_MAX_WING_DIMENSION_M
+            ),
         )
         return Vehicle(
             max_dim_m=v.max_dim_m,
