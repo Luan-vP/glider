@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import mediapy as media
 import numpy as np
@@ -16,6 +18,9 @@ from .constants import (
     WING_RGBA,
     create_pilot_geom,
 )
+
+if TYPE_CHECKING:
+    from .shapes import ShapeConfig
 
 
 @dataclass
@@ -64,6 +69,7 @@ class Vehicle:
         wing_density: float = WING_DENSITY,
         mass_kg: float | None = None,
         orientation: list[float] = [0.0, 0.0, 0.0],
+        shape_config: ShapeConfig | None = None,
     ):
         super().__init__()
 
@@ -71,12 +77,16 @@ class Vehicle:
         self.mass_kg = mass_kg
         self.orientation = orientation
         self.wing_density = wing_density
-        self.faces = faces if faces else []
         self.pilot = pilot
+        self.shape_config = shape_config
 
-        if vertices is not None:
+        if shape_config is not None:
+            self.vertices, self.faces = shape_config.generate_mesh()
+        elif vertices is not None:
             self.vertices = vertices
+            self.faces = faces if faces else []
         else:
+            self.faces = faces if faces else []
             self.initialize_vertices(num_vertices, max_dim_m)
 
     def config(self) -> VehicleConfig:
@@ -97,6 +107,11 @@ class Vehicle:
             self.vertices.append(vertex)
 
     def mutate(self) -> list[list[float]]:
+        if self.shape_config is not None:
+            new_config = self.shape_config.mutate()
+            new_vertices, _ = new_config.generate_mesh()
+            return new_vertices
+
         retries = 10
 
         for _ in range(retries):
