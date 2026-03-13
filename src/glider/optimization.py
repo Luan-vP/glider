@@ -11,7 +11,7 @@ from .constants import (
     MIN_THICKNESS_RATIO,
     THINNESS_PENALTY_WEIGHT,
 )
-from .shapes import NacaConfig, ParametricConfig
+from .shapes import NacaConfig, ParametricConfig, ShapeConfig
 from .vehicle import Vehicle
 
 NUM_GENES = 10
@@ -136,21 +136,22 @@ def _create_random_vehicle(
     mass_kg: float | None,
 ) -> Vehicle:
     """Create a random Vehicle using the appropriate shape config."""
+    cfg: ShapeConfig
     if shape_type == "naca":
-        shape_config = NacaConfig.random(max_dim_m=max_dim_m)
+        cfg = NacaConfig.random(max_dim_m=max_dim_m)
         return Vehicle(
             max_dim_m=max_dim_m,
             pilot=pilot,
             mass_kg=mass_kg,
-            shape_config=shape_config,
+            shape_config=cfg,
         )
     elif shape_type == "parametric":
-        shape_config = ParametricConfig.random()
+        cfg = ParametricConfig.random()
         return Vehicle(
             max_dim_m=max_dim_m,
             pilot=pilot,
             mass_kg=mass_kg,
-            shape_config=shape_config,
+            shape_config=cfg,
         )
     else:
         return Vehicle(

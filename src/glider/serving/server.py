@@ -9,7 +9,11 @@ from PIL import Image
 
 from glider import optimization, vehicle, visualization
 from glider.constants import WING_DENSITY
-from glider.shapes import NacaConfig, ParametricConfig
+from glider.shapes import (
+    NacaConfig,
+    ParametricConfig,
+    ShapeConfig,
+)
 
 from .factory import vehicle_from_schema
 from .schema import (
@@ -141,28 +145,34 @@ async def drop_test_trajectory(
     )
 
 
-def _make_initial_vehicle(req: EvolutionRequest) -> vehicle.Vehicle:
-    """Create a single initial population Vehicle for the given request."""
-    wing_density = req.wing_density if req.wing_density is not None else WING_DENSITY
-    shape_type = req.shape_type
+def _make_initial_vehicle(
+    req: EvolutionRequest,
+) -> vehicle.Vehicle:
+    """Create a single initial Vehicle for the request."""
+    wd = (
+        req.wing_density
+        if req.wing_density is not None
+        else WING_DENSITY
+    )
+    cfg: ShapeConfig
 
-    if shape_type == "naca":
-        shape_config = NacaConfig.random(max_dim_m=req.max_dim_m)
+    if req.shape_type == "naca":
+        cfg = NacaConfig.random(max_dim_m=req.max_dim_m)
         return vehicle.Vehicle(
             max_dim_m=req.max_dim_m,
             pilot=req.pilot,
             mass_kg=req.mass_kg,
-            wing_density=wing_density,
-            shape_config=shape_config,
+            wing_density=wd,
+            shape_config=cfg,
         )
-    elif shape_type == "parametric":
-        shape_config = ParametricConfig.random()
+    elif req.shape_type == "parametric":
+        cfg = ParametricConfig.random()
         return vehicle.Vehicle(
             max_dim_m=req.max_dim_m,
             pilot=req.pilot,
             mass_kg=req.mass_kg,
-            wing_density=wing_density,
-            shape_config=shape_config,
+            wing_density=wd,
+            shape_config=cfg,
         )
     else:
         return vehicle.Vehicle(
@@ -170,7 +180,7 @@ def _make_initial_vehicle(req: EvolutionRequest) -> vehicle.Vehicle:
             max_dim_m=req.max_dim_m,
             pilot=req.pilot,
             mass_kg=req.mass_kg,
-            wing_density=wing_density,
+            wing_density=wd,
         )
 
 
