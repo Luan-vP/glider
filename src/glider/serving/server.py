@@ -1,7 +1,6 @@
 from base64 import b64encode
 from collections.abc import Generator
 from io import BytesIO
-from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
