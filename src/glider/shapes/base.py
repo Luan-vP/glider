@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 
 class ShapeConfig(ABC):
@@ -16,7 +17,7 @@ class ShapeConfig(ABC):
 
     @classmethod
     @abstractmethod
-    def random(cls, **kwargs: object) -> "ShapeConfig":
+    def random(cls, **kwargs: Any) -> "ShapeConfig":
         """Create a random instance for use in an initial population."""
         ...
 

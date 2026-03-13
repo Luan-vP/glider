@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -38,10 +39,10 @@ class PointCloudConfig(ShapeConfig):
         return PointCloudConfig(vertices=list(self.vertices), max_dim_m=self.max_dim_m)
 
     @classmethod
-    def random(cls, **kwargs: object) -> "PointCloudConfig":
+    def random(cls, **kwargs: Any) -> "PointCloudConfig":
         """Create a random point cloud configuration."""
-        num_vertices = int(kwargs.get("num_vertices", 30))
-        max_dim_m = float(kwargs.get("max_dim_m", DEFAULT_MAX_WING_DIMENSION_M))
+        num_vertices: int = int(kwargs.get("num_vertices", 30))
+        max_dim_m: float = float(kwargs.get("max_dim_m", DEFAULT_MAX_WING_DIMENSION_M))
         vertices = [
             [float(np.random.random() * max_dim_m) for _ in range(3)]
             for _ in range(num_vertices)
