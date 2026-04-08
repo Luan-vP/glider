@@ -2,9 +2,12 @@ from base64 import b64encode
 from collections.abc import Generator
 from io import BytesIO
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from PIL import Image
 
 from glider import optimization, vehicle, visualization
@@ -39,6 +42,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+_output_dir = Path(__file__).resolve().parents[3] / "output"
+if _output_dir.is_dir():
+    app.mount("/output", StaticFiles(directory=str(_output_dir)), name="output")
 
 
 @app.get("/")
